@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 elementary LLC. (https://launchpad.net/switchboard-plug-power)
+ * Copyright (c) 2011-2018 elementary LLC. (https://elementary.io)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -19,7 +19,7 @@
 
 namespace Power {
     private GLib.Settings settings;
-    private Gtk.Grid stack_container;
+    private MainView main_view;
     private Gtk.Grid main_grid;
 
     public class Plug : Switchboard.Plug {
@@ -59,7 +59,7 @@ namespace Power {
         }
 
         public override Gtk.Widget get_widget () {
-            if (stack_container == null) {
+            if (main_view == null) {
                 label_size = new Gtk.SizeGroup (Gtk.SizeGroupMode.HORIZONTAL);
 
                 main_grid = new Gtk.Grid ();
@@ -100,20 +100,17 @@ namespace Power {
 
                 main_grid.attach (stack, 0, 8, 2, 1);
 
-                stack_container = new Gtk.Grid ();
-                stack_container.orientation = Gtk.Orientation.VERTICAL;
-                stack_container.margin_bottom = 12;
+                main_view = new MainView ();
+                main_view.margin_bottom = 12;
 
-                create_info_bars ();
-
-                stack_container.add (main_grid);
-                stack_container.show_all ();
+                main_view.add (main_grid);
+                main_view.show_all ();
 
                 // hide stack switcher if we only have ac line
                 stack_switcher.visible = stack.get_children ().length () > 1;
             }
 
-            return stack_container;
+            return main_view;
         }
 
         public override void shown () {
@@ -159,51 +156,6 @@ namespace Power {
                     SETTINGS_DAEMON_PATH, DBusProxyFlags.GET_INVALIDATED_PROPERTIES);
             } catch (IOError e) {
                 warning ("Failed to get settings daemon for brightness setting");
-            }
-        }
-
-        private void create_info_bars () {
-            var label = new Gtk.Label (_("Some changes will not take effect until you restart this computer"));
-
-            var infobar = new Gtk.InfoBar ();
-            infobar.message_type = Gtk.MessageType.WARNING;
-            infobar.no_show_all = true;
-            infobar.get_content_area ().add (label);
-            infobar.hide ();
-
-            var helper = LogindHelper.get_logind_helper ();
-            if (helper != null) {
-                helper.changed.connect (() => {
-                    infobar.no_show_all = false;
-                    infobar.show_all ();
-                });
-            }
-
-            stack_container.add (infobar);
-
-            if (lid_detect ()) {
-                var lock_button = new Gtk.LockButton (get_permission ());
-
-                var permission_label = new Gtk.Label (_("Some settings require administrator rights to be changed"));
-
-                var permission_infobar = new Gtk.InfoBar ();
-                permission_infobar.message_type = Gtk.MessageType.INFO;
-                permission_infobar.get_content_area ().add (permission_label);
-
-                var area_infobar = permission_infobar.get_action_area () as Gtk.Container;
-                area_infobar.add (lock_button);
-
-                permission_infobar.show_all ();
-
-                stack_container.add (permission_infobar);
-
-                //connect polkit permission to hiding the permission infobar
-                permission.notify["allowed"].connect (() => {
-                    if (permission.allowed) {
-                        permission_infobar.no_show_all = true;
-                        permission_infobar.hide ();
-                    }
-                });
             }
         }
 

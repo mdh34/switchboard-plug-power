@@ -20,6 +20,7 @@ vala_precompile (VALA_C ${CMAKE_PROJECT_NAME}
     Plug.vala
     PowerSupply.vala
     LogindHelper.vala
+    MainView.vala
     Widgets/ActionComboBox.vala
     Widgets/LidCloseActionComboBox.vala
     Widgets/TimeoutComboBox.vala
